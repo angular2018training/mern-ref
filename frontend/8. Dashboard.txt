@@ -1,0 +1,252 @@
+﻿1. Profile Reducer và lấy thông tin profile của user đang đăng nhập :
+
+_ B1 : Bổ sung các type :
+
+GET_PROFILE
+PROFILE_LOADING
+PROFILE_NOT_FOUND
+CLEAR_CURRENT_PROFILE
+GET_PROFILES
+
+_ B2 : Tạo Action : profileAction :
+
+import axios from 'axios';
+import { GET_PROFILE, PROFILE_LOADING, GET_ERRORS } from './types';
+
+export const setProfileLoading = () => {
+   return {
+      type: PROFILE_LOADING
+   };
+}
+
+export const getCurrentProfile = () => dispatch => {
+   dispatch(setProfileLoading());
+   axios.get('/api/profile')
+	.then(res => 
+	   dispatch({
+	      type: GET_PROFILE,
+	      payload: res.data
+	   });
+	)
+	.catch(err => 
+	   dispatch({
+	      type: GET_PROFILE,
+	      payload: {}
+	   });
+	);
+}
+
+_ B3 : Tạo Reducer : profileReducer -> combine
+
+import { GET_PROFILE, PROFILE_LOADING } from './../actions/types';
+
+const initialState = {
+   profile: null,
+   profiles: null,
+   loading: false
+}
+
+export default function(state = initialState, action){
+   switch(action.type){	
+      case PROFILE_LOADING:
+         return {
+	    ...state,
+	    loading: true
+	 }
+      case GET_PROFILE:
+         return {
+	    ...state,
+	    loading: false,
+	    profile: action.payload
+	 }
+      default:
+      	return state;
+   }
+}
+
+_ B4 : Tạo component : Tạo thư mục dashboard/Dashboard.js
+
+import PropTypes from 'prop-types';
+import {connect} from 'react-redux';
+import { getCurrentProfile } from './../../actions/profileAction';
+
+<div>
+	<h1>Dashboard</h1>
+</div>
+
+export default connect(null, { getCurrentProfile })(Dashboard);
+
+Sử dụng lifecycle componentDidMount(){
+	this.props.getCurrentProfile();
+}
+
+_ B5 : bổ sung thêm router dashboard tại App.js
+
+_ B6 : Đổ thông tin profile ra trang dashboard :
+
+Dashboard.propTypes = {
+   getCurrentProfile: PropTypes.func.isRequired,
+   auth: PropTypes.object.isRequired,
+   profile: PropTypes.object.isRequired
+}
+
+const mapStateToProps = state => ({
+   profile: state.profile, 
+   auth: state.auth
+});
+
+export default connect(mapStateToProps, { getCurrentProfile })(Dashboard);
+
+2. Clear Profile : Khi logout
+
+_ Tại profileAction.js :
+
+import { CLEAR_CURRENT_PROFILE } from './types';
+
+export const clearCurrentProfile = () => {
+   return {
+	type: CLEAR_CURRENT_PROFILE
+   }
+}
+
+_ Tại profileReducer :
+
+case CLEAR_CURRENT_PROFILE :
+
+return {
+   ...state,
+   profile: null
+}
+
+_ Tại Navbar.js :
+
+import { clearCurrentProfile } from './../../actions/profileAction'; 
+
+_ Sử dụng Tại nút click Logout :
+
+this.props.clearCurrentProfile();
+
+export default connect(mapStateToProps, { logoutUser,clearCurrentProfile  })(Navbar);
+
+_ Đồng thời sử dụng khi hết thời hạn : Tại App.js => TODO: Clear current profile
+
+import { clearCurrentProfile } from './actions/profileAction';
+store.dispatch(clearCurrentProfile());
+
+3. Tạo loading :
+
+_ B1 : Tại render của dashboard:
+
+const { user } = this.props.auth;
+const { profile, loading } = this.props.profile;
+
+let xhtml;
+if(profile === null || loading){
+   xhtml = <h4>Loading...</h4>;   
+}else{
+   xhtml = <h1>Hello</h1>
+}
+
+return (
+   <div className="dashboard">
+      <div className="container">
+         row col-md-12
+		<h1 className="display-4">Dashboard</>
+		{xhtml}
+      </div>
+   </div>
+)
+
+F5 liên tục xem hiệu ứng loading...
+
+_ B2 : Loading dùng hình ảnh :
+
+Copy hình vào common/spinner.gif
+Tạo component Loading : common/Loading.js
+
+import loading from './loading.gif';
+export default () => {
+   return (
+      <div>
+         <img src={loading} alt="Loading..." style={{ width: "200px", margin: "auto", display: "block" }} />
+      </div>
+   );
+}
+
+_ B3 : Sử dụng tại dashboard.js :
+
+import Loading from './../common/Loading';
+Thay đổi chỗ Loading... bằng <Loading />
+
+else của loading :
+// Kiểm tra nếu thông tin user có data
+if(Object.keys(profile).length > 0){
+   xhtml = <h4>TODO: Display Profile</h4>
+}else{
+   // Trường hợp login nhưng không có profile
+   xhtml = (
+	<div>
+		<p className="lead text-muted">Welcome {user.name}</p>
+		<p>Chưa có thông tin vui lòng nhập</p>
+		<Link to="/create-profile" className="btn btn-lg btn-info">Create Profile</Link>
+	</div>
+   );
+}
+
+4. Bảo vệ router dashboard sau khi login : Viết sau khi đăng nhập
+
+_ B1 : Tại common : tạo PrivateRoute.js 
+
+import { Route, Redirect } from 'react-router-dom';
+import { connect } from 'react-redux';
+import PropTypes from 'prop-types';
+
+const PrivateRoute = ({ component: Component, auth, ...rest }) => (
+   <Route 
+   	{...rest}
+	render = {props => 
+		auth.isAuthenticated === true ? (
+			<Component {...props} />
+		) : (
+			<Redirect to="/login" />
+		)
+	}
+   />
+)
+
+PrivateRoute.propTypes = {
+   auth: PropTypes.object.isRequired
+}
+
+const mapStateToProps = state => ({
+   auth: state.auth
+});
+
+export default connect(mapStateToProps, {})(PrivateRoute);
+
+_ B2 : Sử dụng tại App.js :
+
+import vào và thay thế Route dashboard bằng PrivateRoute
+import Switch từ react router dom
+<Switch> 
+   <PrivateRoute exact path="/dashboard" component={Dashboard} />
+</Switch>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

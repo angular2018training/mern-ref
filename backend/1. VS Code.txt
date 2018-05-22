@@ -1,0 +1,22 @@
+﻿_ Cài đặt nodejs mới nhất ( bản recommended for most user )
+	_ Download Visual Studio Code
+	_ Download Git
+	_ Thiết lập VS Code :
+		File => Preferences => Setting
+			editor.wordWrap : "on",
+			emmet.includeLanguages : {
+				"javascript" : "javascriptreact"
+			},
+			emmet.syntaxProfiles : {
+				"javascript" : "jsx"
+			},
+			editor.formatOnSave : true
+
+	_ Extensions :
+		es7 ( ES7 React/Redux/GraphQL/React-Native snippets )
+		bracket co ( Bracket Pair Colorizer ) : phân biệt cặp ngoặc đóng mở
+		prettier : format code
+		live server : live reload cho trang web tĩnh
+		node.js Modules Intellisense : hỗ trợ autocomplete javascript.
+_ Cài đặt mongodb : sử dụng mLab
+	_ Lưu chuỗi mongo : mongodb://

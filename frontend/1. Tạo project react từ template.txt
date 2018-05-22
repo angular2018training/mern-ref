@@ -1,0 +1,24 @@
+﻿1. Tạo project :
+_ create-react-app client
+_ Khai báo biến "proxy" : "http://localhost:5000" trong client để gọi server.
+_ Vấn đề ta cần : chạy server sau đó chạy client. Tại package.json của server :
+Thay vì các bạn sử dụng npm run server && npm start để chạy ta dùng concurrently npm :
+npm install concurrently --save // hỗ trợ sử dụng nhiều câu lệnh npm
+
+"client-install" : "cd client && npm install" hoặc "npm install --prefix client" 
+"client" : "npm start --prefix client"
+"dev" : "concurrently \"npm run server\" \"npm run client\" " => npm run dev
+2. Xử lý asset của project :
+_ copy toàn bộ css vào app.css
+_ chỉnh sửa 1 số css dùng img
+_ Dùng cdn để đưa bootstrap 4 vào.
+
+3. Đưa layout vào :
+_ Tạo thư mục component.
+_ Tạo thư mục layout bên trong component.
+_ Tạo các layout cần thiết : Navbar, Footer, Landing
+_ Footer : thay vì set ngày cứng 2018 => { new Date().getFullYear() }
+_ Trong App.js : navbar, landing, footer
+
+
+

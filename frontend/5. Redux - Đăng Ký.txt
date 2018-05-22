@@ -1,0 +1,54 @@
+﻿1. Tách phần gọi API sang action : 
+
+_ Ta sẽ gọi backend, sau đó chờ server phản hồi, sau đó dispatch action khác.
+_ Tại authActions.js : 
+
+import axios from 'axios';
+
+export const registerUser = userData => dispatch => {
+	axios.post('/api/users/register', userData)
+	     .then(res => {})
+	     .catch(err => {
+		dispatch({
+		  type : GET_ERRORS,
+		  payload : err.response.data
+		})
+             });	
+}
+
+_ Tại types.js : 
+
+Tạo GET_ERRORS = 'GET_ERRORS';
+
+_ Tạo mới errorReducer : 
+
+const initialState = {};
+
+case GET_ERRORS :
+	return action.payload;
+
+Bổ sung combineReducer ( errors : errorReducer )
+
+_ Tại mapStateToProps Register Component tiến hành lấy state errors :
+
+errors : state.errors
+
+_ Sử dụng life cycle : để khi nhận props mới => sẽ thay đổi state errors : componentWillReceiveProps(nextProps)
+
+if(nextProps.errors){
+	this.setState({ errors : nextProps.errors });
+}
+
+_ Check prop type :
+
+errors : PropTypes.object.isRequired
+
+_ Sau khi đăng ký thành công redirect về dashboard : this.props.history.push('/dashboard'); // Chỉ nói 0 làm
+_ Tại Register.js import { withRouter } from 'react-router-dom' và bọc export default withRouter(Register)
+_ Sau đó bổ sung thêm 1 tham số khi gọi dispatch action : registerUser(newUser, this.props.history);
+_ Tại authActions.js : 
+
+	export const registerUser = (userData, history) => dispatch => {
+		axios.post...
+		     .then(res => history.push('/login'))
+	}

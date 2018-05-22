@@ -1,0 +1,332 @@
+﻿1. Profile Component & Route :
+
+B1 : Tạo component : tại thư mục components tạo thư mục create-profile/CreateProfile.js
+
+_ Kết nối với redux.
+
+import { connect }
+import PropTypes from 'prop-types'
+import { TextFieldGroup } from './../common/TextFieldGroup'
+
+_ Copy giao diện vào : 
+_ Tại constructor tạo this.state = {
+   displaySocialInputs: false,
+   handle: '',
+   company: '',
+   website: '',
+   location: '',
+   status: '',
+   skills: '',
+   githubusername: '',
+   bio: '',
+   twitter: '',
+   facebook: '',
+   linkedin: '',
+   youtube: '',
+   instagram: '',
+   errors: ''
+}
+
+CreateProfile.propTypes = {
+   profile: PropTypes.object.isRequired,
+   errors: PropTypes.object.isRequired
+}
+
+const mapStateToProps = state => ({
+   profile: state.profile,
+   errors: state.errors
+)}
+
+_ render : 
+
+<div className="create-profile">
+   .container
+      .row
+      	.col-md-8.m-auto
+	   h1.display-4.text-center> Create Your Profile</>
+	   p.lead text-center> Nhập thông tin profile.
+	   small.d-block.pb-3>* required fields></>
+
+_ Tạo router : Tại App.js
+
+import CreateProfile
+
+<Switch>
+	<PrivateRoute exact path="/create-profile" component={CreateProfile}
+
+_ Tạo common/TextAreaFieldGroup : ( copy từ TextFieldGroup sang ) => bỏ prop : type và bỏ check PropTypes, bỏ default, bỏ disabled.
+
+Đổi tag input thành tag textarea
+
+_ Tạo common/SelectListGroup : ( copy từ TextAreaFieldGroup sang ) : bỏ prop : placeholder 
+	Bổ sung thêm prop options.
+	Check proptypes : options: PropTypes.array.isRequired
+	Trên return bổ sung :
+		const selectOptions = options.map(option => (<option key={option.label} value={option.value}>{option.label} </>) )
+	Bổ sung selectOptions vào trong select.
+	Thay thẻ thành select.
+
+_ Tạo common/InputGroup : ( copy từ TextAreaFieldGroup sang ) : name, placeholder, value, error, onChange
+	Bổ sung thêm prop : icon, type
+	Check props type :
+		icon : PropTypes.string
+		type: PropTypes.string.isRequired.
+	InputGroup.defaultProps = {
+		type: 'text'
+	}
+	
+	Thẻ div bọc ngoài cùng có className="input-group mb-3"
+	Sau đó : 
+		.input-group-prepend
+			span.input-group-text
+				<i className={icon} />
+	Thay textarea thành input
+_ Bổ sung các input custom này vào CreateProfile :
+
+import TextFieldGroup, TextAreaFieldGroup, InputGroup, SelectListGroup
+
+B2 : Tạo form từ các component đã tạo :
+render: const { errors } = this.state;
+	const options = [
+		{ label: '* Select Professional Status', value: 0 },
+		{ label: 'Developer', value: 'Developer' },	
+		{ label: 'Junior', value: 'Senior' },
+		{ label: 'Senior', value: 'Junior' },	
+	]
+
+Dưới small d-block pb-3 required fields :
+
+<form onSubmit={this.onSubmit}>
+
+<TextFieldGroup
+   placeholder="* Profile Handle"
+   name="handle"
+   value={this.state.handle}
+   onChange={this.onChange}
+   error={errors.handle}
+   info="..."
+/>
+
+<SelectListGroup
+   placeholder="Status"
+   name="status"
+   value={this.state.status}
+   onChange={this.onChange}
+   error={errors.status}
+   options={options}
+   info="Give us your career"
+/>
+
+<TextFieldGroup
+   placeholder="Company"
+   name="company"
+   value={this.state.company}
+   onChange={this.onChange}
+   error={errors.company}
+   info="What is your own company you work for ?"
+/>
+
+Tương tự website, location, * skills ( vui lòng nhập cách nhau dấu , ), githubusername, 
+
+<TextAreaFieldGroup
+   placeholder="Bio"
+   name="bio"
+   value={this.state.bio}
+   onChange={this.onChange}
+   error={errors.bio}
+   info="Introduce yourself ?"
+/>
+
+<div className="mb-3"
+	button.btn.btn-light type="button" onClick={ () => {this.setState(prevState => ({ displaySocialInputs: !prevState.displaySocialInputs }) )} }>Add Social Network Links</>
+	<span className="text-muted"> Optional </>
+</>
+{ socialInputs } 
+<input type="submit" value="submit" className="btn btn-info btn-block mt-4" />
+
+** socialInputs
+
+let socialInputs;
+if(displaySocialInputs){
+   socialInputs = (
+      <div>
+     	<InputGroup
+	   placeholder="Facebook URL"
+	   name="facebook"
+	   icon="fab fa-facebook"
+	   value={this.state.facebook}
+	   onChange={this.onChange}
+	   error={errors.facebook}
+	/>
+	// Tương tự các social khác
+      </div>
+   );
+}
+
+B3 : Gọi API 
+
+_ Tại profileAction.js :
+
+export const createProfile = (profileData, history) => dispatch => {
+   axios.post('/api/profile', profileData)
+	.then(res => history.push('/dashboard'))
+	.catch(err => 
+	   dispatch({ type: GET_ERRORS, payload: err.response.data })
+	);
+} 
+
+_ Tại CreateProfile.js :
+
+import createProfile from ''
+
+// Xử lý phần error
+
+componentWillReceiveProps(nextProps) // tại CreateProfile{
+   if(nextProps.errors){
+	this.setState({errors: nextProps.errors});
+   }
+}
+
+export default connect(mapStateToProps, { createProfile })(withRouter(CreateProfile));
+
+// check propstype : 
+
+createProfile : PropTypes.func
+
+// Tại onSubmit : 
+
+const profileData = {
+   // lây các thông tin từ state tại đấy
+}
+this.props.createProfile(profileData, this.props.history);
+
+B4 : Hiển thị thông tin profile : Tại Dashboard.js ( chỗ check Object.keys(profile).length > 0 )
+
+<p className="lead text-muted"
+	Welcome <Link to={`/profile/${profile.handle}`}>{user.name}></>
+</p>
+<ProfileActions />
+
+_ Trong Profile Actions gồm 3 nút : dùng rfc
+
+import { Link } from 'react-router-dom'
+
+const ProfileActions = () => {
+   return (
+	<div>
+	   // copy từ template qua. chỗ ghi chú Dashboard Actions : Edit Profile, Add Exp, Add Edu
+	   // Link /edit-profile /add-experience /add-education
+	</div>
+   )
+}
+
+export default ProfileActions;
+
+_ Phía dưới <ProfileActions />
+
+<div style={{ marginBottom: '60px' }} />
+<button className="btn btn-danger" onClick={this.onDeleteClick}> Delete My Account </>
+	
+onDeleteClick = e => {
+   this.props.deleteAccount(); // import action trong profileActions vào
+}
+
+import { deleteAccount } from './../../actions/profileActions';
+export default connect(mapStateToProps, {getCurrentProfile, deleteAccount})(Dashboard);
+
+Dashboard.propTypes = {
+   deleteAccount: PropTypes.func.isRequired
+}
+
+
+_ Tại profileAction.js : viết delete Account 
+
+import { GET_ERRORS, SET_CURRENT_USER } from 'types'
+
+export const deleteAccount = () => dashboard => {
+   if(window.confirm('Are you sure?')){
+	axios.delete('/api/profile')
+	     .then(res =>
+		dispatch({ type: SET_CURRENT_USER, payload: {} })
+	     ).catch(err => dispatch({ type: GET_ERRORS, payload: err.response.data }));
+   }
+}
+
+2. Edit Profile :
+
+B1 - Tạo router edit-profile : tương tự create-profile
+
+B2 - Tạo component : edit-profile/EditProfile.js
+_ Copy từ CreateProfile.
+_ import { getCurrentProfile } from './../../actions/profileActions';
+_ Bổ sung mapDispatchToProps getCurrentProfile và check propTypes.
+_ Sử dụng lifecycle để load dữ liệu : componentDidMount(){
+	this.props.getCurrentProfile();
+}
+
+B3 : Kiếm tra khi nhận props thì hiển thị data lên input : Dùng componentWillReceiveProps(nextProps){
+   if(nextProps.profile.profile){ // Do khi dispatch getCurrentProfile ta sẽ nhận được profile trong store
+        const profile = nextProps.profile.profile;
+	const skills = profile.skills.join(',');
+	// Kiểm tra nếu field không tồn tại, thì set giá trị rỗng
+	profile.company = !isEmpty(profile.company) ? profile.company : '';
+	// tương tự : website, location, githubusername, bio, 
+	profile.social = !isEmpty(profile.social) ? profile.social : {};
+	twitter, facebook, linkedin, youtube, instagram như company
+	this.setState({
+		handle : profile.handle,
+		// company, website, location, status, skills, githubusername, bio, twitter, facebook, linkedin, youtube
+	})
+   }
+}
+
+B4 : Bổ sung link : /dashboard tại Navbar.js khi đã login
+B5 : Submit : sử dụng lại createProfile ( vì đã check nếu chưa có thêm, nếu có update )
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

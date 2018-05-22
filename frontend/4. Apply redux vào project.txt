@@ -1,0 +1,157 @@
+﻿1. Redux : npm install redux react-redux redux-thunk
+_ Tại AppComponent :
+
+B1 : import { Provider } from 'react-redux';
+
+B2 : Tách store ra file riêng : store.js ( src/ )
+
+import { createStore, applyMiddleware } from 'redux';
+import thunk from 'redux-thunk';
+
+const middleware = [thunk]; 
+const initialState = {};
+const store = createStore(rootReducer , initialState, applyMiddleware(...middleware)); // spread operator
+export store;
+
+B3 : Wrap ngoài cùng : ( ngoài Router )
+
+import store from './store';
+<Provider store={store}>
+	Router
+</>
+
+B4 : Tạo thư mục reducers : tạo index.js
+
+import { combineReducers } from 'redux';
+import authReducer from './authReducer';
+
+export default combineReducers({
+	auth : authReducer
+});
+
+B5 : Tạo authReducer.js trong reducers :
+
+const initialState = {
+	isAuthenticated : false,
+	user : {}
+}
+
+export default function(state = initialState, action){
+	switch(action.type){
+		default : 
+			return state;
+	}
+}
+
+B6 : Đưa reducer vào store : tại store.js
+
+import rootReducer from './reducers';
+
+// Bổ sung tham số đầu của createStore
+
+B7 : Apply redux developer tool :
+Tham số thứ 3 của createStore
+
+compose(
+	applyMiddleware(...middleware),
+	window.__REDUX_DEVTOOLS_EXTENSION__ && window.__REDUX_DEVTOOLS.EXTENSION__()
+
+)
+
+2. Test :
+
+B1 : Tạo actions -> types.js
+
+export const TEST_DISPATCH = 'TEST_DISPATCH';
+
+B2 : Tại actions -> tạo authActions.js
+
+import { TEST_DISPATCH } from './actions/types';
+
+export const registerUser = (userData) => {
+	return {
+		type : TEST_DISPATCH,
+		payload : userData
+	}
+}
+
+B3 : Tại authReducer :
+
+import { TEST_DISPATCH } from './actions/types';
+
+case TEST_DISPATCH :
+	return {
+		...state,
+		user : action.payload
+	}
+
+B4 : Sử dụng tại Register.js
+
+import { connect } from 'react-redux';
+import { registerUser } from './actions/authActions';
+
+export default connect(null, {
+	registerUser
+})(Register);
+
+B5 : Tại onSubmit : 
+
+Gọi : this.props.registerUser(newUser);
+
+B6 : Tiến hành lấy state trong store :
+
+const mapStateToProps = state => {
+	auth : state.auth; // Hiển tại chỉ có 1 reducer duy nhất là auth.
+}
+
+const { user } = this.props.auth;
+=> log ra xem. Hoặc hiển thị
+
+B7 : Check proptypes :
+import propTypes from 'prop-types';
+
+_ Trên kết nối redux :
+
+Tên_Component.propTypes = {
+  registerUser : PropTypes.func.isRequired,
+  auth : PropTypes.object.isRequired
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

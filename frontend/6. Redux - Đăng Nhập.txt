@@ -1,0 +1,219 @@
+﻿1. Đăng nhập : 
+_ Giải thích : khi ta đăng nhập ta sẽ nhận được token, và mỗi lần request ta sẽ dùng token để xác thực. Logout xóa token.
+_ Lưu token : localStorage.
+_ Lưu vào header
+
+B1 : Thêm action : tại authActions.js
+
+import setAuthToken from '../utils/setAuthToken';
+import jwt_decode from 'jwt-decode';
+
+export const loginUser = (userData) => dispatch => {
+  axios.post('/api/users/login', userData)
+       .then(res => {
+	  const  { token } = res.data;
+	// lưu ls
+	  localStorage.setItem('jwtToken', token);
+	// set vào header
+	  setAuthToken(token); // Tạo thư mục
+	// decode token và lấy thông tin user
+	  const decoded = jwt_decode(token);
+	// Thiết lập thông tin user hiện tại
+	  dispatch(setCurrentUser(decoded));
+       })
+       .catch(err => {
+	   dispatch({
+	      type : GET_ERRORS,
+	      payload : err.response.data
+	   })
+       })
+}
+
+B2 : Tạo thư mục utils : setAuthToken.js : quay lại B2
+
+import axios from 'axios';
+
+const setAuthToken = token => {
+   if(token){
+      // apply to every request
+      axios.default.headers.common['Authorization'] = token ;
+   }else{
+      // delete auth header
+      delete axios.defaults.headers.common['Authorization'];
+   }
+}
+
+export default setAuthToken ;
+
+
+B3 : Sử dụng thư viện jwt-decode : để giải mã token ( npm i jwt-decode --save ) quay lại B2
+B4 : tạo action setCurrentUser : tại authActions.js
+
+export const setCurrentUser = (decoded) => {
+   return {
+      type : SET_CURRENT_USER // import vào type
+      payload : decoded	
+   }
+}
+
+B5 : Xử lý tại reducer :
+import SET_CURRENT_USER
+
+case :
+	return {
+		...state,
+		isAuthenticated: !isEmpty(action.payload) // copy phương thức isEmpty vào thư mục validation ( client ) từ server qua, thay đổi thành export default
+		user : action.payload
+	}
+
+B6 : Sử dụng tại Login.js :
+
+import PropTypes from 'prop-types';
+import { connect } from 'react-redux';
+import { loginUser } from './../../actions/authActions';
+import classnames from 'classnames';
+
+Login.propTypes = {
+   loginUser : PropTypes.func.isRequired,
+   auth : PropTypes.object.isRequired,
+   errors: PropTypes.object.isRequired
+}
+
+const mapStateToProps = state => ({
+    auth : state.auth,
+    errors : state.errors
+})
+
+export default connect(mapStateToProps , { loginUser })(Login);
+
+_ Tại render : Tiến hành validate ( tương tự Register )
+
+
+_ Tại componentWillReceiveProps(nextProps){
+
+    if(nextProps.errors){
+       this.setState({ errors : nextProps.errors });
+    }
+
+    if(nextProps.auth.isAuthenticated){
+       this.props.history.push('/dashboard');
+    }
+
+}
+
+_ Tại onSubmit :
+	userData lấy từ form.
+	this.props.loginUser(userData);
+
+B7 : Trường hợp F5 mất authenticated :
+
+Tại App.js :  
+
+import jwt_decode from 'jwt-decode';
+import setAuthToken from './....';
+import { setCurrentUser } from './actions/authActions';
+
+Trên class App : Kiểm tra token
+
+	if(localStorage.jwtToken){
+		// Set auth token vào header => decode token để get user => set user đã xác thực
+		setAuthToken(localStorage.jwtToken);
+		const decoded = jwt_decode(localStorage.jwtToken);
+		store.dispatch(setCurrentUser(decoded));
+	}
+
+
+2. Đăng Xuất :
+
+B1 : Tại authActions.js :
+
+export const logoutUser = () => dispatch => {
+   // remove token
+   localStorage.removeItem('jwtToken');
+   // remove auth header
+   setAuthToken(false);
+   // set user đăng nhập = {} và isAuthenticated false
+   dispatch(setCurrentUser({}));
+}
+
+B2 : Tại Navbar.js :
+
+import PropTypes from 'prop-types';
+import { connect } from 'react-redux';
+import { logoutUser } from './../../actions/authActions';
+
+Navbar.propTypes = {
+    logoutUser : PropTypes.func.isRequired,
+    auth : PropTypes.object.isRequired
+}
+
+const mapStateToProps = state => ({
+   auth : state.auth
+})
+
+export default connect(mapStateToProps, { logoutUser })(Navbar);
+
+
+B3 : Tại render :
+
+const { isAuthentcated, user } = this.props.auth;
+const authLinks = (
+   // Đem thẻ ul li của logout, dashboard
+);
+const guestLinks = (
+   // Đem thẻ ul li của login và register vào
+);
+
+_ Tạo thẻ a cho li và bắt sự kiện onClick = {this.onLogout}
+
+onLogout = e => {
+   e.preventDefault();
+   this.props.logoutUser();
+}
+
+_ Dùng điều kiện để render giao diện các link : 
+
+{ isAuthenticated ? authLinks : guestLinks }
+
+_ Tại thẻ a logout chèn img vào : 
+
+<a>
+   <img 
+      className="rounded-circle"
+      src={user.avatar}
+      alt={user.name}
+      style={{ width:'25px', marginRight: '5px' }}
+      title="" />
+    {' '} // Dấu cách
+    Logout
+</a>
+
+B4 : Xử lý nếu token hết hạn hoặc logout thì chuyển về trang login hoặc trang nào đó
+
+_ Tại App.js chỗ check token để khi F5 lại vẫn giữ đăng nhập :
+
+// check thời hạn token
+const currentTime = Date.now() / 1000;
+if(decoded.exp < currentTime){
+   // logout
+   store.dispatch(logoutUser());
+   // TODO : Clear current profile
+   // Redirect to login
+   window.location.href = '/login';
+}
+
+B5 : Xử lý khi login rồi không gõ trực tiếp URL để vào login được nữa : ( Register cũng vậy )
+
+componentDidMount(){
+    if(this.props.auth.isAuthenticated){
+       this.props.history.push('/dashboard');
+    }
+}
+
+// tương tự cho Register
+// tương tự kết nối redux cho landing ( trang chủ ) lấy state auth để không cho vào trang này khi ĐÃ ĐĂNG NHẬP.
+
+
+
+
+

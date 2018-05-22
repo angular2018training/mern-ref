@@ -1,0 +1,144 @@
+﻿1. Tạo folder validation : login.js, register.js
+_ Sử dụng module : validator ( https://github.com/chriso/validator.js/ )
+*** is-empty.js ***
+const isEmpty = (value) => {
+	return(
+		value === undefined || 
+		value === null || 
+		(typeof value === 'object' && Object.key(value).length === 0) ||
+		(typeof value === 'string' && value.trim().length === 0)
+	);
+}	
+
+module.exports = isEmpty;
+
+*** REGISTER.JS ***
+const validator = require('validator');
+const isEmpty = require('./is-empty');
+
+module.exports = function validateRegisterInput(data){
+	let errors = {};
+
+	data.name = !isEmpty(data.name) ? data.name : '';
+	data.email = !isEmpty(data.email) ? data.email : '';
+	data.password = !isEmpty(data.password) ? data.password : '';
+	data.repassword = !isEmpty(data.repassword) ? data.repassword : '';
+
+	if(!Validator.isLength(data.name, { min: 2, max : 30 })){
+		errors.name = 'Name must be between 2 and 30 characters';
+	}
+
+	if(Validator.isEmpty(data.name)){
+		errors.name = 'Name field is required';
+	}
+
+	if(Validator.isEmpty(data.email)){
+		errors.email = 'Email field is required';
+	}
+
+	if(!Validator.isEmail(data.email)){
+		errors.email = 'Email is invalid';
+	}
+
+	if(Validator.isEmpty(data.password)){
+		errors.password = 'Password field is required';
+	}
+
+	if(!Validator.isLength(data.password, { min: 6, max : 30 })){
+		errors.password = 'Password must be between 6 and 30 characters';
+	}
+
+	if(Validator.isEmpty(data.repassword)){
+		errors.repassword = 'rePassword field is required';
+	}
+
+	if(!Validator.isLength(data.repassword, { min: 6, max : 30 })){
+		errors.repassword = 'rePassword must be between 6 and 30 characters';
+	}
+
+	if(!Validator.equals(data.password, data.repassword)){
+		errors.password2 = 'Passwords must match';
+	}
+
+	return {
+		errors,
+		isValid : isEmpty(errors)
+	}
+}
+
+*** routes/api/users.js : validate register
+	// Load input validation
+	const validateRegisterInput = require('./../../validation/register');
+	// validate register : => Bổ sung trên cùng
+	const { errors, isvalid } = validateRegisterInput(req.body);
+	// check
+	if(!isValid){
+		return res.status(400).json(errors);
+	}
+*** Bổ sung : Nếu email tồn tại bổ sung vào errors :
+	if(user){
+		errors.email = 'Email already exists';
+		return res.status(400).json(errors);
+	}
+		
+
+*** LOGIN.JS *** 
+	const validator = require('validator');
+	const isEmpty = require('./is-empty');
+
+module.exports = function validateLoginInput(data){
+	let errors = {};
+	
+	data.email = !isEmpty(data.email) ? data.email : '';
+	data.password = !isEmpty(data.password) ? data.password : '';
+	
+
+	if(Validator.isEmpty(data.email)){
+		errors.email = 'Email field is required';
+	}
+
+	if(!Validator.isEmail(data.email)){
+		errors.email = 'Email is invalid';
+	}
+
+	if(Validator.isEmpty(data.password)){
+		errors.password = 'Password field is required';
+	}
+
+	if(!Validator.isLength(data.password, { min: 6, max : 30 })){
+		errors.password = 'Password must be between 6 and 30 characters';
+	}
+
+	return {
+		errors,
+		isValid : isEmpty(errors)
+	}
+}
+
+*** routes/api/users.js : validate login
+
+	// Load input validation
+	const validateLoginInput = require('./../../validation/login');
+	// validate login: => Bổ sung trên cùng
+	const { errors, isvalid } = validateLoginInput(req.body);
+	// check
+	
+*** Bổ sung : Nếu user khong6 tồn tại bổ sung vào errors :
+
+	if(!user){
+		errors.email = 'User not found'; // them dong nay
+		return res.status(404).json(errors);
+	}
+
+*** Bổ sung nếu sai password : chỗ thông báo password incorrect
+
+	errors.password = 'Password incorrect'; // dòng này
+	return res.status(400).json(errors);
+
+
+
+
+
+
+
+	

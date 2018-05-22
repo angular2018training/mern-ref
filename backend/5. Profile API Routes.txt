@@ -1,0 +1,290 @@
+﻿1. Profile Model :
+
+user : {
+	type : Schema.Types.ObjectId,
+	ref : 'users'
+},
+handle : {
+	type : String,
+	required : true,
+	max : 40,
+},
+company : {
+	type : String
+},
+website : {
+	type : String
+},
+location: {
+	type : String
+},
+status : {
+	type : String,
+	required : true
+},
+skills : {
+	type : [String],
+	required : true
+},
+bio: {
+	type : String
+},
+github: {
+	type : String
+},
+experience : [
+	{
+		title : {
+			type : String,
+			required : true
+		},
+		company : {
+			type : String,
+			required : true
+		},
+		location : {
+			type : String
+		},
+		from: {
+			type : Date,
+			required : true
+		},
+		to: {
+			type : Date,
+			required : true
+		},
+		current : {
+			type: Boolean,
+			default : false
+		},
+		description : {
+			type: String
+		}
+	}
+],
+education: [
+	{
+		school : {
+			type : String,
+			required : true
+		},
+		degree: {
+			type : String,
+			required : true
+		},
+		fieldofstudy : {
+			type : String,
+			required : true
+		},
+		from: {
+			type : Date,
+			required : true
+		},
+		to: {
+			type : Date,
+			required : true
+		},
+		current : {
+			type: Boolean,
+			default : false
+		},
+		description : {
+			type: String
+		}
+	}
+],
+social : {
+	youtube: {
+		type: String
+	},
+	twitter: {
+		type: String
+	},
+	facebook: {
+		type: String
+	},
+	linkedin: {
+		type: String
+	},
+	instagram: {
+		type: String
+	},
+},
+date: {
+	type : Date,
+	default : Date.now
+}
+
+module.exports = Profile = mongoose.model('profile', ProfileSchema);
+
+
+
+2. Router : api/profile.js
+2.1 : Thông tin profile của user hiện tại : router private
+
+const passport = require('passport');
+const profile = require('./../../models/profile');
+const user = require('./../../models/profile');
+
+router.get('/', passport.authenticate('jwt', { session : false }), (req, res) => {
+	const errors = {};
+	Profile.findOne({ user: req.user.id }) // lấy trong jwt ra
+		.populate('user', ['name', 'avatar']) // gọi tham chiếu qua bảng khác
+		.then(profile => {
+			if(!profile){
+				errors.noprofile = 'There is no profile for this user';
+				 return res.status(404).json(errors);
+			}
+			res.json(profile);
+		})
+		.catch(err => res.status(404).json(err));
+})
+
+2.2 Thêm mới & sửa profile của user hiện tại : 
+
+router.post('/', passport.authenticate('jwt', { session : false }), (req, res) => {
+	const profileFields = {};
+	profileFields.user = req.user.id;
+	if(req.body.handle) profileFields.handle = req.body.handle;
+	if(req.body.company) profileFields.company = req.body.company;
+	=> tt website
+	=> tt location
+	=> tt bio
+	=> tt status
+	=> tt github
+	// Skills - cắt đưa vào mảng cách nhau dấu ,
+	if(typeof req.body.skills !=== undefined){
+		profileFields.skills = req.body.skills.split(',');
+	}
+	// Social
+	profileFields.social = {};
+	if(req.body.youtube) profileFields.social.youtube = req.body.youtube;
+	// tt twitter
+	// tt facebook
+	// tt linkedin
+	// tt instagram
+
+	Profile.findOne({ user : req.user.id })
+		.then(profile => {
+			if(profile){
+				// update
+				// new : true => trả về document đã update thay vì giá trị gốc
+				profile.findOneAndUpdate({ user : req.user.id },{ $set: profileFields }, {new : true})
+					.then(profile => res.json(profile));
+			}else{
+				// create
+				// check nếu handle tồn tại
+				profile.findOne({ handle: profileFields.handle }).then(profile => {
+					if(profile){
+						errors.handle = 'That handle already exists';
+						res.status(400).json(errors);
+					}else{
+						new Profile(profileFields).save().then(profile => res.json(profile));
+					}
+				})
+			}
+		})
+
+})
+
+2.3 Validation profile : validation/profile.js
+
+=> tương tự login
+
+module.exports = function validateProfileInput(data) {
+	let errors = {};
+	// check handle, status, skills 
+	data.handle = !isEmpty(data.handle) ? data.handle : '';
+	// tt status, skills
+	if(!Validator.isLength(data.handle, {min: 2, max: 40})){
+		errors.handle = 'Handle needs to between 2 to 40 characters';
+	}
+
+	// validate Empty Handle => Handle field is required
+	// validate Empty Status
+	// validate Empty Skills
+
+	if(!isEmpty(data.website)){
+		if(!Validator.isURL(data.website)){
+			errors.website = 'Not a valid URL';
+		}
+	}
+	// validate url youtube => not a valid URL
+	// url twitter
+	// url facebook
+	// url linkedin
+	// url instagram
+
+	return {
+		errors,
+		isValid: isEmpty(errors)
+	}
+}
+
+** Bổ sung : post /api/profile ( add & update )
+const { errors, isValid } = validateProfileInput(req.body);
+if(!isValid){
+	return res.status(400).json(errors);
+}	
+
+2.4 : get handle by handle : public
+
+router.get('/handle/:handle', (req, res)=> {
+	const errors = {};
+	Profile.findOne({ handle : req.params.handle })		
+		.populate('user', ['name', 'avatar'])
+		.then(profile => {
+			if(!profile){
+				errors.noprofile = 'There is no profile for this user';
+				res.status(404).json(errors);
+			}
+			res.json(profile);
+		})
+		.catch(err => res.status(400).json(err));
+});
+
+2.5 : get all profile
+
+router.get('/all', (req, res) => {
+	const errors = {};
+	Profile.find()		
+		.populate('user', ['name', 'avatar'])
+		.then(profiles => {
+			if(!profiles){
+				errors.noprofile = 'There are no profile';
+				res.status(404).json(errors);
+			}
+			res.json(profiles);
+		})
+		.catch(err => {
+			errors.noprofile = 'There are no profiles';
+			res.status(404).json(errors);
+		});
+});
+
+2.6 : get profile by user id
+
+router.get('/user/:user_id', (req, res)=> {
+	const errors = {};
+	Profile.findOne({ handle : req.params.user_id })		
+		.populate('user', ['name', 'avatar'])
+		.then(profile => {
+			if(!profile){
+				errors.noprofile = 'There is no profile for this user';
+				res.status(404).json(errors);
+			}
+			res.json(profile);
+		})
+		.catch(err => {
+			errors.noprofile = 'There is no profile for this user';
+			res.status(404).json(errors);
+		});
+});
+
+
+
+
+
+
+
+

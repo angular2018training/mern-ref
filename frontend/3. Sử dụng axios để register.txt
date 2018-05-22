@@ -1,0 +1,20 @@
+﻿1. Sử dụng axios :
+_ Cài đặt axios cho client.
+_ Dùng axios call api : lỗi sẽ là err.response.data
+_ Gọi api : /api/users/register => cấu hình proxy cho source client : http://localhost:5000
+2. Xử lý errors : 
+
+_ Khi catch error ta chỉ việc setState cho errors là : err.response.data
+
+3. Hiển  thị lỗi :
+
+_ Sử dụng class is-invalid cho input sẽ border màu đỏ.
+_ Sử dụng thư viện classnames để nối nhiều class ( do input có nhiều class ) - npm i classnames 
+	import classnames from 'classnames';
+	className={ classnames('các class default',{ 'lớp thêm vào' : điều_kiện } ) } // VD : 'is-invalid' : errors.name
+_ Hiển thị câu thông báo lỗi 
+
+{ errors.name && ( <div className="invalid-feedback" >{errors.name}</div> ) }
+_ Muốn bỏ validate của html5 :
+
+Thêm thuộc tính novalidate cho form.

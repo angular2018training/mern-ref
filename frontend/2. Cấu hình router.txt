@@ -1,0 +1,42 @@
+﻿1. Cấu hình router :
+
+_ Cài đặt route cho client : 
+	cd client
+	npm i react-router-dom
+_ import { BrowserRouter as Router, Route } from 'react-router-dom'
+_ Bao bọc ngoài cùng là Router
+_ Tương ứng mỗi Route là các component :
+	'/' => Landing => <Route exact path="/" component={Landing} />
+
+_ Tạo trang register : 
+	Trong components tạo folder auth
+	Trong auth tạo Register.js, Login.js
+_ App.js : register & login cần có container bao bên ngoài.
+
+<Navbar />
+   
+       
+<Route exact path="/" component={Landing} />
+          
+<div className="container">
+            
+	<Route exact path="/register" component={Register} />
+            
+	<Route exact path="/login" component={Login} />
+          
+</div>
+     
+     
+<Footer />
+
+_ Tại Navbar.js & Landing.js : import Link từ react router dom vào để chuyển trang
+
+2. Trang Register : Register Component
+
+_ Tạo state : name, email, password, repass, errors = {}
+
+3. Trang Login
+
+_ state : email, password, errors = {}
+
+
