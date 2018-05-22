@@ -20,3 +20,13 @@
 		node.js Modules Intellisense : hỗ trợ autocomplete javascript.
 _ Cài đặt mongodb : sử dụng mLab
 	_ Lưu chuỗi mongo : mongodb://
+
+_ Angular :
+	_ angular 6 snippets
+	_ auto close tag
+	_ auto import 
+	_ auto rename tag
+	_ bootstrap 4, font awesome 4
+	_ bracket pair colorizer
+	_ One dark pro
+	_ vscode-icons
